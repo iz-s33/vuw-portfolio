@@ -1,0 +1,386 @@
+---
+title: "DATA 303 Assignment 3"
+author: "Izzy Southon, 300597453"
+date: "Due: 11:59 PM Friday 17 May 2024"
+output: "pdf_document"
+---
+
+## Assignment Questions
+
+1. **(8 marks)**
+
+Data were collected on 158 cruise ships in operation around the world in 2013.  Complaints had been raised by customers about overcrowding on cruises and there was interest in investigating whether there was a trend of overcrowding on certain types of ships.  As part of the investigation, a regression analysis was carried out that could be used to predict passenger density (number of passengers per unit area) based on ship characteristics.  The data are available in the dataset `cruise_ship.csv` and include the following variables:
+
+    Variable | Description
+    --- | ------------------
+    `age.2013` | Age (as of 2013) 
+    `tonnage` | Weight of ship (1000s of tonnes)
+    `passengers.100` | Maximum number of passengers (100s)
+    `length` | Length of ship (100s of feet)
+    `cabins` | No. of passenger cabins (100s) 
+    `crew.100` | No. of crew member (100s) 
+    `pass.density` | Passenger density (no. of passengers per square foot)
+
+There were high correlations among some pairs of predictors. As a result, principal components regression was used to avoid potential multi-collinearity issues.
+
+```{r}
+cs<-read.csv("cruise_ship.csv")
+str(cs)
+```
+
+a. **(3 marks)** Obtain the principal components (PCs) for the 6 predictors in the dataset using the `pcr` command and provide summary output.  Based on the output:
+
+```{r message = FALSE}
+library(pls)
+library(pander)
+library(MASS)
+library(leaps)
+```
+
+```{r}
+set.seed(1)
+pcr.mod<-pcr(pass.density ~ age.2013 + tonnage + passengers.100 + length + 
+               cabins + crew.100, data = cs, scale = TRUE, validation="CV")
+summary(pcr.mod)
+
+lm.mod<-lm(pass.density ~ age.2013 + tonnage + passengers.100 + length + 
+               cabins + crew.100, data=cs)
+summary(lm.mod)$r.squared
+```
+i. How many principal components are required to explain at least 90% of the variance in the predictors?
+ii. What would be the $R^2$ value for a linear model for `pass.density` that includes all predictors.  Explain your answer based on the summary output of the `pcr` command. 
+
+More than two principal components are required to explain at least 90% of the variance in the predictors (the predictors being the numerical predictors age.2013, tonnage, passengers.100, length, cabins, and crew.100). The $R^2$ value for a linear model for `pass.density` that includes all predictors is 0.6709. All 6 PCs explain 67.09% of the variation in passenger density. This is the same as the value of R2 in the least squares regression model that includes all predictors.
+
+b. **(3 marks)** Obtain a plot of the cross-validation mean squared error (MSE) for each number of principal components and state the number of PCs that gives the smallest cross-validation MSE.  
+
+```{r}
+validationplot(pcr.mod, val.type = "MSEP")
+min.pcr = which.min(MSEP(pcr.mod)$val[1,1, ] ) - 1
+min.pcr
+```
+
+The plot shows that the smallest cross-validation MSE occurs for 5 PCs. 
+
+c. **(2 marks)** Based on your results from parts (a) and (b), how many PCs would you choose to represent the predictors in a regression model in place of all the predictors. Explain your answer briefly.
+
+There is no widely accepted method for selecting the number of PCs. In part a, 2 PCs explained at least 90% of variation in the predictors, meaning that the 2 PCs captured at least 90% of the information in the 6 predictors. 1 PC explained at least 80% of variation in the predictors, meaning 1 PC captured at least 80% of the information in the 6 predictors. In part b the CV error shows a roughly downward trend. This suggests that using more than 5 PCs does not significantly increase the predictive performance of the model. 90% is an acceptably high amount of variation to capture and therefore the dimension of the predictor space can be reduced from 5 to 2 and still capture most the the variability in the space. We opt to use 2 PCs to represent the predictors in a regression model. 
+
+2. **(12 marks)**
+
+In a 1978 study on absenteesim from school, data on 146 children from Walgett, New South Wales, Australia were collected.  The number of days absent from school in a particular school year was recorded for each child, together with some demographic information.  The data are available in the dataset `quine.csv` and include the following variables:  
+
+    Variable | Description
+    --- | ------------------
+    `Eth |` Ethnic background | Aboriginal or Not, ("A" or "N"). 
+    `Sex |` Factor with levels ("F" or "M")
+    `Age |` Primary ("F0"), or forms "F1," "F2" or "F3". 
+    `Lrn |` "AL" = Average learner, "LD"=Learning disabilities
+    `Days |` Days absent from school in the year. 
+
+```{r}
+quine<-read.csv("quine.csv")
+str(quine)
+```
+a. **(2 marks)** Explain briefly why it is unnecessary to use an offset variable in a model for the number of days absent.
+
+It is unnecessary to use an offset variable (a variable with a coefficient constrained to be 1) because all children had equal exposure. The number of days absent from school were counted over a period of the school year for all children in the study. 
+
+b. **(3 marks)** Fit a Poisson and a negative binomial regression model with `Days` as the response variable and the rest of the variables as predictors.  Obtain plots of residuals against predicted values.  Comment on what the plots show. 
+    
+```{r}
+# Fitting models 
+# Poisson 
+quine.pois<-glm(Days ~ as.factor(Eth) + as.factor(Sex) + as.factor(Age) + as.factor(Lrn),
+data = quine, family = poisson)
+
+# Negative binomial regression
+quine.nb<-glm.nb(Days ~ as.factor(Eth) + as.factor(Sex) + as.factor(Age) + as.factor(Lrn),
+data = quine)
+
+# Plots of residuals against predicted values 
+par(mfrow=c(1,2))
+# Poisson
+plot(predict(quine.pois, type = "response"), residuals(quine.pois), main="Poisson Regression",
+ylab="Residuals", xlab="Predicted", ylim=c(-5,15))
+abline(h=0,lty=1,col="red")
+lines(lowess(predict(quine.pois,type="response"),residuals(quine.pois)),lwd=2, lty=2)
+
+# Negative binomial
+plot(predict(quine.nb,type="response"),residuals(quine.nb), main="Negative Binomial Regression",
+ylab="Residuals", xlab="Predicted", ylim=c(-5,15))
+abline(h=0,lty=1,col="red")
+lines(lowess(predict(quine.nb,type="response"),residuals(quine.nb)), lwd=2, lty=2)
+```
+
+In the poisson model, the dotted line seems to show no trend in the residual vs predicted values relationship, however, the dotted line increases past the zero line which might suggest that as the predicted values increase, the model may under-predict as the number of days absent gets larger. For the negative binomial model, the dotted line shows no trend in the residual vs predicted values relationship. 
+    
+c. **(2 marks)** Calculate AIC and BIC statistics for both models in part (b) and print these in a table. State the preferred model based on these results.
+
+```{r}
+ICs<-data.frame(c("Poisson", "NB"),
+c(AIC(quine.pois), AIC(quine.nb)),
+c(BIC(quine.pois), BIC(quine.nb)))
+colnames(ICs)<-c("Model", "AIC", "BIC")
+library(pander)
+pander(ICs)
+```
+Based on these results, AIC and BIC both indicate preference for the negative binomial model as a lower AIC and BIC are obtained for the NB model than for the poisson model. 
+
+d. **(2 marks)** Give the value of $\hat\theta$ from the fitted negative binomial model.
+
+```{r}
+summary(quine.nb)
+```
+
+From the summary output above, we find $\hat\theta=1.275$
+
+e. **(3 marks)** Use the formula for $Var(Y)$ for the negative binomial distribution and the value of $\hat\theta$ in part (d) to explain why your conclusion in part (c) is not surprising.
+
+```{r}
+mu <- mean(quine$Days)
+theta <- 1.275
+
+variance <- mu + (mu^2) / theta
+variance
+```
+
+The conclusion in part (c) is not surprising because $\hat\theta=1.275$ and $Var(Y) = 228.926$, meaning that count variables do not meet the Mean=Variance assumption. Since the variance of 228.926 is much greater than the mean of the response variable "Days", there is over-dispersion. Therefore, given the over-dispersion in the data (as indicated by the variance and theta), it's not surprising that the negative binomial model is preferred over the Poisson model because the negative binomial model incooperates over-dispersion by estimating the amount of extra variation as
+
+$Var(Y)=\mu + \frac{\mu^2}{\theta}=E(Y)+\frac{(E(Y))^2}{\theta},$ where $\theta$ is an over-dispersion parameter. 
+
+3. **(20 marks)**
+
+The majority of modern high rise structures are dependent on concrete for structural integrity and durability.  High-performance concrete (HPC) is made using a mix of ingredients, and it is of interest to predict the performance of HPC from the composition of ingredients.  We will make use of data contained in the dataset `concrete.csv`.  This dataset contains experimental data on the use of seven different ingredients in HPC:
+
+    * cement (`CEMENT`)
+    * slag (`SLAG`)
+    * fly ash (`FLY_ASH`)
+    * water (`WATER`)
+    * superplasticizer (`SP`)
+    * coarse aggregate (`COARSE_AG`)
+    * fine aggregate (`FINE_AG`)
+
+    All of these ingredients are measured in kg/m$^3$.  Three different outcomes were measured:
+
+    * slump (`SLUMP`)
+    * flow (`FLOW`)
+    * 28-day compressive strength (`COMP_STRENGTH`)
+
+```{r}
+con<-read.csv("concrete.csv")
+str(con)
+```
+
+
+a. **(1 mark)** It is of interest to estimate the coefficient of variation for the slump-to-flow ratio $\left(\frac{\tt SLUMP}{\tt FLOW}\right)$.  Note that the coefficient of variation is given by
+        \begin{eqnarray*}
+          \mbox{CV} &=& \frac{\sigma}{\mu},
+        \end{eqnarray*}
+        which is estimated by
+        \begin{eqnarray*}
+          \widehat{\mbox{CV}} &=& \frac{\overline{X}}{S^2}.
+        \end{eqnarray*}
+        Estimate the coefficient of variation for the slump-to-flow ratio from the original data.
+
+```{r}
+# Calculate SLUMP/FLOW ratio
+con$SLUMP_FLOW <- con$SLUMP / con$FLOW
+
+# Compute mean and standard deviation of SLUMP/FLOW ratio
+mean_slump_flow <- mean(con$SLUMP_FLOW)
+sd_slump_flow <- sd(con$SLUMP_FLOW)
+
+# Calculate coefficient of variation
+CV_slump_flow <- (sd_slump_flow / mean_slump_flow) 
+CV_slump_flow_perc <- (sd_slump_flow / mean_slump_flow) * 100
+
+# Print the coefficient of variation
+print(CV_slump_flow)
+print(CV_slump_flow_perc)
+```
+
+From the original data, the estimate for the coefficient of variation for the slump-to-flow ratio is 0.4499 (4dp) or 44.99%. 
+
+b. **(3 marks)** Now use 10,000 bootstrap samples to simulate the sampling distribution for the coefficient of variation for the slump-to-flow ratio.  Present a density plot of the sampling distribution and a vertical bar at the estimated coefficient of variation from the original data.  Describe the shape of the sampling distribution.
+
+```{r}
+set.seed(0)
+
+nboot<-10000
+
+bootstrap_CV <- numeric(nboot)
+
+# Perform bootstrap resampling
+for (i in 1:nboot) {
+  
+  # Sample with replacement from SLUMP/FLOW ratio
+  bootstrap_sample <- sample(con$SLUMP_FLOW, replace = TRUE)
+  
+  # Calculate mean and standard deviation of the bootstrap sample
+  mean_bootstrap <- mean(bootstrap_sample)
+  sd_bootstrap <- sd(bootstrap_sample)
+  
+  # Calculate coefficient of variation for the bootstrap sample
+  bootstrap_CV[i] <- sd_bootstrap / mean_bootstrap
+}
+
+# Plot the density of bootstrap CV values
+density_plot <- density(bootstrap_CV)
+
+# Create a new plot
+plot.new()
+
+# Plot the density
+plot(density_plot, main = "Sampling Distribution For the Slump-to-Flow Ratio",
+     xlab = "Coefficient of Variation", ylab = "Density")
+
+# Add a vertical line for the estimated CV from the original data
+abline(v = CV_slump_flow, col = "red")
+
+```
+
+The density plot above shows that the shape of the sampling distribution seems to follow a normal distribution. This indicates that the variability of the slump to flow ration (SLUMP/FLOW) across the bootstrap samples is symmetric around the mean. 
+
+We now turn our focus to predicting `COMP_STRENGTH`, measured in millions of pascals (MPa), using a linear regression of `COMP_STRENGTH` on the seven     ingredients: `CEMENT`, `SLAG`, `FLY_ASH`, `WATER`, `SP`, `COARSE_AG`, and `FINE_AG`.
+
+c. **(4 marks)** Carry out an exhaustive model search using best subset selection of the seven predictors `CEMENT`, `SLAG`, `FLY_ASH`, `WATER`, `SP`, `COARSE_AG`, and `FINE_AG`.  Use the `regsubsets` function in the `leaps` package, explaining which predictors would be included in the best model selected using BIC.  How would the set of predictors selected change if instead using adjusted $R^{2}$ or the $C_{p}$ statistic?
+
+The exhaustive model search using 7 predictors has $2^7 = 128$ possible models, but exclude the null model, leaving 127 models. 
+
+```{r}
+exhaustive_model<-regsubsets(COMP_STRENGTH ~ CEMENT + SLAG + FLY_ASH + WATER + SP + COARSE_AG + FINE_AG, data = con)
+exhaustive_model_summary<-summary(exhaustive_model)
+pander(exhaustive_model_summary$outmat)
+
+c(best_adjrsq=which.max(exhaustive_model_summary$adjr2),
+  best_cp=which.min(exhaustive_model_summary$cp),
+  best_bic=which.min(exhaustive_model_summary$bic))
+```
+
+The best model according to BIC is model 5. Model 5 includes the predictors `CEMENT`,`FLY_ASH`,`WATER`,`COARSE_AG`, and `FINE_AG`. Both adjusted $R^{2}$ and the $C_{p}$ statistic found model 6 to be the best model, adding `SLAG` to the set of predictors. 
+
+d. **(4 marks)** Now carry out best subset selection using 20 repetitions of 10-fold cross-validation and the criterion of test MSE.  Focusing on the top 10 models in terms of test MSE, which predictors would be included in the best model selected using this approach?  Why?
+
+```{r}
+library(caret)
+library(doParallel) # allows you to do parallel computing
+library(foreach) 
+```
+
+```{r}
+# Set random number generator seed for replicability of results.
+set.seed(0)
+
+# Specify the indices of predictors to be considered.
+variable.indices <- 2 : 8 # columms of the variables to be used as predictors
+
+# Produce a matrix
+all.comb <- expand.grid(as.data.frame(matrix(rep(0 : 1, length(variable.indices)), nrow = 2)))[-1, ] # -1 get rid of the first row, the null model 
+
+# Fire up 75% of computer cores for parallel processing.
+nclust <- makeCluster(detectCores() * 0.75)
+registerDoParallel(nclust)
+
+#############################################
+## MSE: Repeated 10-fold cross-validation. ##
+#############################################
+
+# Specify the number of repetitions of k-fold cross-validation.
+folds <- 10
+reps <- 20
+
+fitControl <- trainControl(method = "repeatedcv", number = folds, repeats = reps, seeds = 1 : (folds * reps + 1), savePredictions = TRUE)
+
+model.fits <- foreach(i = 1 : nrow(all.comb), .packages = "caret") %dopar%
+{
+  model.equation <- as.formula(paste("COMP_STRENGTH ~", paste(names(con)[variable.indices][all.comb[i,] == 1], collapse = " + ")))
+  train(model.equation, data = con, method = "lm", trControl = fitControl)
+}
+
+MSE.extract <- function(x)
+{
+  return(as.numeric(x$results[2]) ^ 2)
+}
+
+# Apply the function to all of the candidate models that were fit using
+# repeated 10-fold cross-validation.
+MSE.rep.cv <- sapply(model.fits, MSE.extract)
+
+# View the 10 lowest estimated values for test MSE.
+sort(MSE.rep.cv)[1 : 10]
+
+# View the top 10 models in terms of the objective of minimising MSE.  
+order(MSE.rep.cv)[1 : 10]
+
+# Construct a matrix in which to store information on which variables are included in the 10 best models.
+best.models <- matrix(NA, nrow = 10, ncol = length(variable.indices), dimnames = list(NULL, names(con)[variable.indices]))
+
+# Cycle through the top 10 models and save TRUEs and FALSEs for columns of variables included and not included in the best models.
+for(i in 1 : 10)
+{
+  best.models[i, ] <- all.comb[order(MSE.rep.cv)[i], ] == 1 
+}
+
+pander(best.models)
+
+```
+
+Using this approach, the predictors that would be included in the best model are `CEMENT`, `FLY_ASH`, `WATER`, `SP`, `COARSE_AG`, and `FINE_AG` (`SLAG` is excluded from the model).
+
+e. **(3 marks)** Finally, use 20 repetitions of 10-fold cross-validation to find the optimal number of components if using principal component regression to predict the compression strength.
+
+```{r}
+
+set.seed(0)
+
+reps<-20
+folds<-10
+
+unregister_dopar <- function()
+{
+  env <-  foreach:::.foreachGlobals
+  rm(list=ls(name=env),pos=env)
+}
+  unregister_dopar()
+  
+variable.indices <- 2 : 8 # columms of the variables to be used as predictors
+
+# Carry out repeated k-fold cross-validation of PCR.
+fitControl <- trainControl(method = "repeatedcv", number = folds, repeats = reps,
+savePredictions = TRUE)
+model.equation <- as.formula(paste("COMP_STRENGTH ~", paste(names(con)[variable.indices],
+collapse = " + ")))
+pcr <- train(model.equation, data = con, method = "pcr", scale = TRUE, tuneLength = 10,
+trControl = fitControl)
+
+# Produce a plot of estimated RMSE vs. number of PCs.
+plot(pcr)
+
+pander(cbind("PCs" = 1 : 6, "MSE" = as.numeric(pcr$results[, 2] ^ 2)))
+
+summary(pcr$finalModel)
+
+
+# Shut down cores.
+stopCluster(nclust)
+```
+The optimal number of components if using principal component regression to predict the compression strength is 4 PCs which explain over 80% of the variance. 
+
+f. **(5 marks)** Compare the three different methods used for model selection in parts (c), (d), and (e):
+    
+* best subset selection using an exhaustive model search using `regsubsets` and the criteria of adjusted $R^{2}$, the $C_{p}$ statistics, and/or BIC;
+* best subset selection using an exhaustive model search using 20 repetitions of 10-fold cross-validation and the criterion of test MSE; and
+* principal component regression using 20 repetitions of 10-fold cross-validation and the criterion of test MSE.
+
+Briefly explain the relative advantages and disadvantages of the three methods and when we would prefer that particular method.  Explain which method's results you would likely prefer here and why?
+
+The advantages of using best subset selection using `regsubsets` is that it is computationally quicker than the other feature selection methods. It also explores all possible subsets of predictors. It can also compare models based on different criteria such as adjusted $R^{2}$, the $C_{p}$, and BIC. Disadvantages include that it is limited to numerical predictors only, and treats dummy variables as separate predictors. It can also only be used for categorical predictors than have 2 or less levels. `regsubsets` uses criteria to select its best models, and these criteria can give different results in practice which may also be a disadvantage. We prefer this method when we are short for time, and/or want to find the best model based on specific criteria where all possible subset combinations want to be explored. 
+
+Advantages of using best subset selection using an exhaustive model search using 20 reps of 10-fold CV is that all possible subsets of predictors are considered to form candidate models. These candidate models are compared with the model minimising test MSE. Another advantage is that this method utilises CV, and therefore helps to prevent overfitting by estimating model performance on unseen data. It gives a more accurate representation of predictive performance than best subset selection alone does. A disadvantage of this method is that it is more computationally expensive that the previous method, as the number of repetitions and folds in CV increase computational time. It is also important to note that the number of folds matters, as small K leads to higher bias, and that K is chosen based on the dataset size. This method is preferred when dealing with a larger number of predictors, or when model interpretability is not the main focus and predictive accuracy is. 
+
+Advantages of PCR is that it might provide better predictions of the response than linear regression does. More advantages are that PCR reduces dimensionality by transforming predictors into principal components, which can help solve issues of multicollinearity and reduce overfitting.This method is preferred in situations when reducing the number of predictors has minimal real world impacts in terms of time, money, or effort. 
+
+The goal of this task was to predict `COMP_STRENGTH` measured in MPa, using a linear regression of the response on the 7 ingredients (predictors). Based on this, I would prefer to use the results from best subset selection using an exhaustive model search using 20 repetitions of 10-fold cross-validation and the criterion of test MSE. This is because this method tells us what predictors are best in predicting `COMP_STRENGTH` while balancing between model interpretability, predictive accuracy, and computational efficiency. Using cross-validation provides a reliable estimate for predictive accuracy, yet avoids overfitting. 
+
+**Assignment total: 40 marks**
