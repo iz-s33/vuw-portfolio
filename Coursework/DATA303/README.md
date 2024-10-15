@@ -10,7 +10,7 @@ This folder contains coursework and grade details for the **DATA303** course.
 | Assignment 2    | A+           | 38.5/40    | 5%     | 4.81%    |
 | Test 1          | B            | 35/50      | 35%    | 24.50%   |
 | Assignment 3    | A-           | 33/40      | 5%     | 4.13%    |
-| Assignment 4    | A+           | -          | 5%     | 5.00%    |
+| Assignment 4    | A+           | 50/50      | 5%     | 5.00%    |
 | Test 2          | -            | -          | 45%    | 33.75%   |
 | **TOTAL**       | -            | -          | 100%   | **76.69%** |
 
