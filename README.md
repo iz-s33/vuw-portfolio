@@ -1,5 +1,5 @@
 ## Coursework Collection
-This repository contains my coursework and projects completed as part of my Data Science degree at Victoria University of Wellington. It includes assignments, research projects, and scripts across various topics such as data visualization, statistical analysis, and machine learning.
+This repository contains my coursework and projects completed as part of my Data Science degree at Victoria University of Wellington. It includes assignments, research projects, and scripts across various topics such as data visualisation, statistical analysis, and machine learning.
 
 ## Contents
 - `Coursework` - Assignments from various courses.
