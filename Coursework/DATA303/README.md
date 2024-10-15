@@ -12,6 +12,6 @@ This folder contains coursework and grade details for the **DATA302** course, wh
 | Test            | C+           | 61/100     | 35%    | 21.35%   |
 | **TOTAL**       | -            | -          | 100%   | **83.93%** |
 
-This folder includes all assignments, project files, and additional resources for the **Predictive Modelling** course, where I achieved an **A-** overall. My assignments demonstrated a strong understanding of key concepts, though the test presented some challenges. 
+This folder includes all assignments, project files, and additional resources for **DATA302**, where I achieved an **A-** overall. My assignments demonstrated a strong understanding of key concepts, though the test presented some challenges. 
 
 ---
