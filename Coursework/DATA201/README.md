@@ -17,8 +17,9 @@ This folder contains coursework and grade details for the **DATA201** course.
 
 ## Notable Projects and Assignments
 
-- **Assignment 1**: A foundational assignment focusing on basic statistical analysis using R.
-- **Assignment 2**: Extended assignment on data wrangling, including data cleaning and transformations.
+- **Assignment 1**: 
+- **Assignment 2**: 
+- **Assignment 3**:
 - **Project**: The capstone project of the course, where I applied various machine learning techniques to solve a real-world data science problem.
 - **Tests**: Mid-course and final tests assessing theoretical and practical knowledge of the material covered.
 
