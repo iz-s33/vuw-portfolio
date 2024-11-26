@@ -9,15 +9,10 @@ This repository contains my coursework and projects completed as part of my Data
 
 ## Key Projects
 - **Data Visualization** - Interactive visualizations using Shiny.
-- **Final Year Project: Selecting the Best Feature to Classify Between Healthy Patients and Patient's with Parkinson's Disease** - Individual Project Using RStudio and Python
+- **Final Year Project: Selecting the Best Features to Classify Between Healthy Patients and Patient's with Parkinson's Disease** - Individual Project Using RStudio and Python
 
 ## Tools and Technologies
 - R, Python, Shiny, SQL, RStudio, Git
-
-## How to Use
-To run the scripts, ensure you have the required libraries installed:
-- R: `tidyverse`, `ggplot2`, `shiny`
-- Python: `pandas`, `numpy`, `matplotlib`
 
 ## Contact
 Feel free to reach out to me at [isabelle.southon6@gmail.com](mailto:youremail@example.com) for any questions.
